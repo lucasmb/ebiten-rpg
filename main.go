@@ -176,7 +176,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	tilemapJSON, err := NewTilemapJSON("maps/tiles/spawn.json")
+	tilemapJSON, err := NewTilemapJSON("assets/maps/tileset/spawn.json")
 	if err != nil {
 		log.Fatal(err)
 	}
