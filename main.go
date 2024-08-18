@@ -17,6 +17,7 @@ type Game struct {
 	enemies     []*entities.Enemy
 	items       []*entities.Item
 	tilemapJSON *TilemapJSON
+	tilesets    []Tileset
 	tilemapImg  *ebiten.Image
 }
 
@@ -56,16 +57,15 @@ func (g *Game) Update() error {
 
 	//health pick
 	for _, item := range g.items {
-
-		if (g.player.X == item.X && g.player.Y == item.Y)  {
+		if g.player.X == item.X && g.player.Y == item.Y {
 			g.player.Health += item.HealAmount
 			fmt.Printf("Picked health!: %d \n", g.player.Health)
 		}
 
 	}
 
-	Offset := 8.0;
-	g.camera.FollowTarget(g.player.X+Offset, g.player.Y+Offset, 320, 240)
+	offset := 8.0
+	g.camera.FollowTarget(g.player.X+offset, g.player.Y+offset, 320, 240)
 	g.camera.Constrain(float64(g.tilemapJSON.Layers[0].Width)*16.0, float64(g.tilemapJSON.Layers[0].Height)*16.0, 320, 240)
 
 	return nil
@@ -79,10 +79,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	opts := ebiten.DrawImageOptions{}
 
 	//loop over tile layers
-	for _, layer := range g.tilemapJSON.Layers {
-
+	for layerIndex, layer := range g.tilemapJSON.Layers {
 		// loop over tile data
+		//log.Printf("LAYERDATA: : %v", layer.Data)
+
 		for index, id := range layer.Data {
+
+			if id == 0 {
+				continue
+			}
+			//getting tile position
 			x := index % layer.Width
 			y := index / layer.Width
 
@@ -90,21 +96,22 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			x *= 16
 			y *= 16
 
-			// id-1 because json starts with 1
-			// and 22 is the max x size of our tilemap image
-			srcX := (id - 1) % 22
-			srcY := (id - 1) / 22
+			// log.Printf("layerIndex: %d", layerIndex)
+			// log.Printf("id : %d", id)
 
-			srcX *= 16
-			srcY *= 16
+			img := g.tilesets[layerIndex].Img(id)
 
 			//set the drawimage options to draw the tile at x,y
 			opts.GeoM.Translate(float64(x), float64(y))
+
+			//fix position, top left
+			opts.GeoM.Translate(0.0, -(float64(img.Bounds().Dy()) + 16))
+
 			opts.GeoM.Translate(g.camera.X, g.camera.Y)
 
 			//draw the tile
 			screen.DrawImage(
-				g.tilemapImg.SubImage(image.Rect(srcX, srcY, srcX+16, srcY+16)).(*ebiten.Image),
+				img,
 				&opts,
 			)
 
@@ -155,7 +162,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func main() {
 	ebiten.SetWindowSize(640, 480)
-	ebiten.SetWindowTitle("Hello, World!")
+	ebiten.SetWindowTitle("Go RPG!")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	playerImg, _, err := ebitenutil.NewImageFromFile("assets/img/ninja.png")
@@ -177,6 +184,11 @@ func main() {
 		log.Fatal(err)
 	}
 	tilemapJSON, err := NewTilemapJSON("assets/maps/tileset/spawn.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tilesets, err := tilemapJSON.GenTilesets()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -204,7 +216,7 @@ func main() {
 				Sprite: &entities.Sprite{
 					Img: skeletonImg,
 					X:   150.0,
-					Y:   150.0,
+					Y:   50.0,
 				},
 				FollowsPlayer: false,
 			},
@@ -222,8 +234,8 @@ func main() {
 			{
 				Sprite: &entities.Sprite{
 					Img: sushiImg,
-					X:   150.0,
-					Y:   10.0,
+					X:   250.0,
+					Y:   95.0,
 				},
 				HealAmount: 5,
 			},
@@ -231,6 +243,7 @@ func main() {
 
 		tilemapJSON: tilemapJSON,
 		tilemapImg:  tilemapImg,
+		tilesets:    tilesets,
 		camera:      NewCamera(0.0, 0.0),
 	}
 

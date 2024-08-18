@@ -22,7 +22,7 @@ func (c *Camera) Constrain(tilemapWidthPixels, tilemapHeightPixels, screenWidth,
 	c.X = math.Min(c.X, 0.0)
 	c.Y = math.Min(c.Y, 0.0)
 
-	c.X = math.Max(c.X, screenWidth - tilemapWidthPixels)
-	c.Y = math.Max(c.Y, screenHeight - tilemapHeightPixels)
+	c.X = math.Max(c.X, screenWidth-tilemapWidthPixels)
+	c.Y = math.Max(c.Y, screenHeight-tilemapHeightPixels)
 
 }
