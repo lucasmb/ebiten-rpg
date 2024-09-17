@@ -2,5 +2,6 @@
 
 
 #### Run the Game
-cd ebiten-rpg
-go run *.go
+````cd ebiten-rpg
+    make run
+````
